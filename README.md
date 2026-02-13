@@ -4,7 +4,7 @@ Calcular PTAX do dia em um site estático.
 ## Deploy 100% estático
 
 Este projeto funciona sem backend em produção.
-O frontend (`public/`) consulta diretamente a API PTAX do Banco Central.
+O frontend (`public/`) consulta diretamente a API PTAX do Banco Central do Brasil.
 
 ## Regra de negócio (valor em reais)
 
