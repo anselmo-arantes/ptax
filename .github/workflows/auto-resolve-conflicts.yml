@@ -1,20 +1,24 @@
 name: Auto-resolve conflicts vs develop (PR wins)
 
 on:
-  push:
+  pull_request_target:
     branches:
-      - "codex/**"
-  workflow_dispatch:
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   resolve:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Configure git identity
@@ -25,7 +29,7 @@ jobs:
       - name: Fetch develop
         run: git fetch origin develop
 
-      - name: Merge develop into this branch (keep branch version on conflicts)
+      - name: Merge develop into PR (keep PR version on conflicts)
         run: |
           git merge origin/develop -X ours --no-edit || true
 
@@ -37,5 +41,5 @@ jobs:
             exit 1
           fi
 
-      - name: Push back to same branch
-        run: git push origin HEAD
+      - name: Push back to PR branch
+        run: git push origin HEAD:${{ github.event.pull_request.head.ref }}
