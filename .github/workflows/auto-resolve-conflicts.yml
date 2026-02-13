@@ -1,16 +1,20 @@
-name: Auto-resolve conflicts (PR wins) against develop
+name: Auto-resolve conflicts + auto-merge into develop (PR wins)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  resolve:
+  resolve_and_automerge:
+    if: >
+      github.event.pull_request.base.ref == 'develop' &&
+      contains(github.event.pull_request.labels.*.name, 'codex')
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v4
@@ -29,8 +33,6 @@ jobs:
 
       - name: Merge develop into PR (keep PR version on conflicts)
         run: |
-          # Estamos na branch do PR.
-          # Em conflitos, "ours" = branch atual (PR). Então o PR vence.
           git merge develop -X ours --no-edit || true
 
       - name: Fail if unresolved conflicts remain
@@ -44,3 +46,9 @@ jobs:
       - name: Push back to PR branch
         run: |
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --auto --squash
