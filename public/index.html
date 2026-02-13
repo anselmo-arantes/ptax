@@ -25,11 +25,31 @@
 
       <section class="panel">
         <form id="ptax-form" class="query-form">
-          <label for="date">Selecione a data</label>
-          <div class="input-row">
-            <input id="date" name="date" type="date" required />
-            <button type="submit" id="submit-btn">Buscar PTAX</button>
+          <div class="input-row two-fields">
+            <div class="field">
+              <label for="date">Data da cotação</label>
+              <input id="date" name="date" type="date" required />
+            </div>
+
+            <div class="field">
+              <label for="brl-value">Valor em reais (R$)</label>
+              <input
+                id="brl-value"
+                name="brlValue"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Ex.: 120,00"
+                required
+              />
+            </div>
+
+            <button type="submit" id="submit-btn">Calcular PTAX + spread</button>
           </div>
+          <small class="helper-text">
+            Regra fechada: valor &lt; 90 usa dia anterior + 7%; valor &gt;= 90 usa dia da cotação +
+            6%.
+          </small>
         </form>
 
         <section id="result" class="result hidden" aria-live="polite"></section>

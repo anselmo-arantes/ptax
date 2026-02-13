@@ -100,6 +100,25 @@ body {
   gap: 10px;
 }
 
+.two-fields {
+  grid-template-columns: 1fr 1fr auto;
+}
+
+.helper-text {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 input,
 button {
   border-radius: 12px;
@@ -186,7 +205,8 @@ pre {
 }
 
 @media (max-width: 640px) {
-  .input-row {
+  .input-row,
+  .two-fields {
     grid-template-columns: 1fr;
   }
 
