@@ -1,25 +1,21 @@
-name: Auto-resolve conflicts + auto-merge into develop (PR wins)
+name: Auto-resolve conflicts PR-WINs
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+  push:
+    branches:
+      - "codex/**"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  resolve_and_automerge:
-    if: >
-      github.event.pull_request.base.ref == 'develop' &&
-      contains(github.event.pull_request.labels.*.name, 'codex')
+  resolve:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Configure git identity
@@ -28,10 +24,9 @@ jobs:
           git config user.email "conflict-bot@users.noreply.github.com"
 
       - name: Fetch develop
-        run: |
-          git fetch origin develop:develop
+        run: git fetch origin develop:develop
 
-      - name: Merge develop into PR (keep PR version on conflicts)
+      - name: Merge develop into branch (keep branch version on conflicts)
         run: |
           git merge develop -X ours --no-edit || true
 
@@ -43,12 +38,5 @@ jobs:
             exit 1
           fi
 
-      - name: Push back to PR branch
-        run: |
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
-      - name: Enable auto-merge (squash)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --auto --squash
+      - name: Push back
+        run: git push origin HEAD
