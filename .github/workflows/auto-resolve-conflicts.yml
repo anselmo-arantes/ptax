@@ -1,4 +1,4 @@
-name: Auto-resolve conflicts vs develop (PR wins)
+name: Auto-resolve conflicts + immediate merge into develop (PR wins)
 
 on:
   pull_request_target:
@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  resolve:
+  resolve_and_merge:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,3 +43,12 @@ jobs:
 
       - name: Push back to PR branch
         run: git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+
+      - name: Merge PR immediately (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --squash --merge
