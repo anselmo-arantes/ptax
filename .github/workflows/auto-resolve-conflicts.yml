@@ -1,21 +1,20 @@
-name: Auto-resolve conflicts (PR wins) against develop
+name: Auto-resolve conflicts vs develop (PR wins)
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches:
+      - "codex/**"
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   resolve:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Configure git identity
@@ -24,14 +23,11 @@ jobs:
           git config user.email "conflict-bot@users.noreply.github.com"
 
       - name: Fetch develop
-        run: |
-          git fetch origin develop:develop
+        run: git fetch origin develop
 
-      - name: Merge develop into PR (keep PR version on conflicts)
+      - name: Merge develop into this branch (keep branch version on conflicts)
         run: |
-          # Estamos na branch do PR.
-          # Em conflitos, "ours" = branch atual (PR). Então o PR vence.
-          git merge develop -X ours --no-edit || true
+          git merge origin/develop -X ours --no-edit || true
 
       - name: Fail if unresolved conflicts remain
         run: |
@@ -41,6 +37,5 @@ jobs:
             exit 1
           fi
 
-      - name: Push back to PR branch
-        run: |
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+      - name: Push back to same branch
+        run: git push origin HEAD
