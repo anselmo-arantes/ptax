@@ -163,8 +163,8 @@ async function calculateSpreadFlow(requestedDate, valorEmReais) {
     finalRate,
     estimatedUsd,
     ruleLabel: usePrevious
-      ? 'Valor < 90: dia anterior + 7%'
-      : 'Valor >= 90: dia selecionado + 6%',
+      ? 'Valor < R$90,00: dia anterior + 7%'
+      : 'Valor >= R$90,00: dia selecionado + 6%',
     audit: {
       todayAttempts: todayQuote.attempts,
       previousAttempts: previousQuote.attempts
