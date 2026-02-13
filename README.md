@@ -11,7 +11,8 @@ O frontend (`public/`) consulta diretamente a API PTAX do Banco Central do Brasi
 O formulário possui um campo `valorEmReais` (min `0.01`, step `0.01`) e aplica:
 
 - valor **< R$90,00**: usa PTAX do dia anterior (ou último útil anterior) + **7%** de spread.
-- valor **>= R$90,00**: usa PTAX do dia selecionado + **6%** de spread.
+- valor **> R$90,00**: usa PTAX do dia anterior (ou último útil anterior) + **6%** de spread.
+- valor **= R$90,00**: usa PTAX do dia selecionado + **6%** de spread.
 
 A tela exibe:
 

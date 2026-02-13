@@ -137,9 +137,24 @@ async function calculateSpreadFlow(requestedDate, valorEmReais) {
     };
   }
 
-  const usePrevious = valorEmReais < 90;
-  const spreadPct = usePrevious ? 0.07 : 0.06; // regra fechada: >= 90 usa 6%
-  const base = usePrevious ? previousQuote : todayQuote;
+  let base;
+  let spreadPct;
+  let ruleLabel;
+
+  if (valorEmReais < 90) {
+    base = previousQuote;
+    spreadPct = 0.07;
+    ruleLabel = 'Valor < R$90,00: dia anterior + 7%';
+  } else if (valorEmReais > 90) {
+    base = previousQuote;
+    spreadPct = 0.06;
+    ruleLabel = 'Valor > R$90,00: dia anterior + 6%';
+  } else {
+    base = todayQuote;
+    spreadPct = 0.06;
+    ruleLabel = 'Valor = R$90,00: dia selecionado + 6%';
+  }
+
   const basePtax = Number(base.quote?.cotacaoVenda);
 
   if (!Number.isFinite(basePtax) || basePtax <= 0) {
@@ -162,9 +177,7 @@ async function calculateSpreadFlow(requestedDate, valorEmReais) {
     spreadPct,
     finalRate,
     estimatedUsd,
-    ruleLabel: usePrevious
-      ? 'Valor < R$90,00: dia anterior + 7%'
-      : 'Valor >= R$90,00: dia selecionado + 6%',
+    ruleLabel,
     audit: {
       todayAttempts: todayQuote.attempts,
       previousAttempts: previousQuote.attempts
