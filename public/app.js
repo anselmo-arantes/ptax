@@ -85,6 +85,14 @@ function fmtMoney(value) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function fmtDate(isoDate) {
+  if (!isoDate || typeof isoDate !== 'string') return '-';
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  const [year, month, day] = parts;
+  return `${day}-${month}-${year}`;
+}
+
 function renderFallback(data) {
   resultBox.innerHTML = `
     <h2>Não foi possível obter a cotação</h2>
@@ -98,8 +106,8 @@ function renderSuccess(data) {
     <h2>Resultado da PTAX + spread</h2>
     <div class="result-grid">
       <article class="kpi"><div class="label">Valor informado</div><div class="value">${fmtMoney(data.valorEmReais)}</div></article>
-      <article class="kpi"><div class="label">Data solicitada</div><div class="value">${data.requestedDate}</div></article>
-      <article class="kpi"><div class="label">Data base usada</div><div class="value">${data.baseDate}</div></article>
+      <article class="kpi"><div class="label">Data solicitada</div><div class="value">${fmtDate(data.requestedDate)}</div></article>
+      <article class="kpi"><div class="label">Data base usada</div><div class="value">${fmtDate(data.baseDate)}</div></article>
       <article class="kpi"><div class="label">Regra aplicada</div><div class="value">${data.ruleLabel}</div></article>
       <article class="kpi"><div class="label">PTAX base (venda)</div><div class="value">R$ ${fmtNumber(data.basePtax)}</div></article>
       <article class="kpi"><div class="label">Spread</div><div class="value">${fmtNumber(data.spreadPct * 100, 2)}%</div></article>
