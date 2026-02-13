@@ -1,44 +1,35 @@
 # ptax
-Calcular ptax do dia.
+Calcular PTAX do dia em um site estático.
 
-## Frontend + backend local
+## Deploy 100% estático
 
-A aplicação tem uma UI simples e um backend Node para consultar a PTAX do Banco Central.
+Este projeto agora funciona sem backend para produção estática.
+O frontend (`public/`) consulta diretamente a API PTAX do Banco Central.
 
-- Frontend: `GET /`
-- API local: `GET /api/ptax?date=YYYY-MM-DD`
+## Como publicar
 
-## Contrato do endpoint `/api/ptax`
+Publique os arquivos abaixo em qualquer hosting estático (Vercel static, Netlify, S3+CloudFront, GitHub Pages, etc):
 
-O endpoint sempre retorna **2XX (HTTP 200)** para o frontend:
+- `public/index.html`
+- `public/styles.css`
+- `public/app.js`
 
-- sucesso BCB: `{ ok: true, source: "bcb", requestedDate, usedDate, ptax }`
-- fallback (erro HTTP/rede/sem dados): `{ ok: false, source: "fallback", ... }`
+## Desenvolvimento local
 
-Além disso, em caso de data sem cotação, o serviço tenta automaticamente dias anteriores (lookback de até 7 dias).
-
-## Configuração de upstream
-
-Por padrão, a aplicação usa o endpoint oficial:
-
-- `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata`
-
-Para testes/integração local, é possível sobrescrever via variável de ambiente:
-
-- `PTAX_API_BASE=http://localhost:9999/olinda/servico/PTAX/versao/v1/odata`
-
-## Rodando localmente
+Você pode abrir `public/index.html` direto no navegador ou usar um servidor simples:
 
 ```bash
-npm start
+python3 -m http.server 4173 -d public
 ```
 
-Abra no navegador: `http://localhost:3000`
+Acesse: `http://localhost:4173`.
 
-## Testes
+## Observação
 
-```bash
-npm test
-```
+A aplicação depende de disponibilidade/CORS da API PTAX do BCB no navegador.
+Se houver bloqueio de rede/cors no ambiente do usuário, a tela exibirá fallback de erro.
 
-Inclui teste de sucesso com servidor HTTP mockado simulando a API PTAX.
+
+## Estrutura enxuta
+
+Para manter o projeto 100% estático, arquivos de backend/testes Node foram removidos.

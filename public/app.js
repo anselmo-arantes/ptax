@@ -3,7 +3,81 @@ const dateInput = document.querySelector('#date');
 const resultBox = document.querySelector('#result');
 const submitBtn = document.querySelector('#submit-btn');
 
+const API_BASE = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata';
+const MAX_LOOKBACK_DAYS = 7;
+
 dateInput.value = new Date().toISOString().slice(0, 10);
+
+function formatBcbDate(isoDate) {
+  const [year, month, day] = isoDate.split('-');
+  return `${month}-${day}-${year}`;
+}
+
+function subtractDays(isoDate, days) {
+  const d = new Date(`${isoDate}T12:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function buildUrl(isoDate) {
+  const bcbDate = formatBcbDate(isoDate);
+  return `${API_BASE}/CotacaoDolarDia(dataCotacao='${bcbDate}')?$format=json`;
+}
+
+async function fetchPtaxFromBcb(requestedDate) {
+  const attempts = [];
+
+  for (let i = 0; i <= MAX_LOOKBACK_DAYS; i += 1) {
+    const dateToTry = subtractDays(requestedDate, i);
+    const url = buildUrl(dateToTry);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!response.ok) {
+      attempts.push({ date: dateToTry, kind: 'http_error', status: response.status });
+      return {
+        ok: false,
+        source: 'fallback',
+        requestedDate,
+        attempts,
+        message: 'API do BCB indisponível no momento.',
+        upstreamStatus: response.status,
+        ptax: null
+      };
+    }
+
+    const payload = await response.json();
+    const rows = payload?.value ?? [];
+    const last = rows.at(-1) ?? null;
+
+    if (last) {
+      attempts.push({ date: dateToTry, kind: 'success', status: response.status });
+      return {
+        ok: true,
+        source: 'bcb',
+        requestedDate,
+        usedDate: dateToTry,
+        attempts,
+        upstreamStatus: response.status,
+        ptax: last
+      };
+    }
+
+    attempts.push({ date: dateToTry, kind: 'empty', status: response.status });
+  }
+
+  return {
+    ok: false,
+    source: 'fallback',
+    requestedDate,
+    attempts,
+    message: 'Sem cotação disponível no período consultado.',
+    ptax: null
+  };
+}
 
 function fmtCurrency(value) {
   if (typeof value !== 'number') return '-';
@@ -18,26 +92,11 @@ function renderSuccess(data) {
   resultBox.innerHTML = `
     <h2>Resultado da PTAX</h2>
     <div class="result-grid">
-      <article class="kpi">
-        <div class="label">Data solicitada</div>
-        <div class="value">${data.requestedDate}</div>
-      </article>
-      <article class="kpi">
-        <div class="label">Data utilizada</div>
-        <div class="value">${data.usedDate}</div>
-      </article>
-      <article class="kpi">
-        <div class="label">Cotação compra</div>
-        <div class="value">R$ ${compra}</div>
-      </article>
-      <article class="kpi">
-        <div class="label">Cotação venda</div>
-        <div class="value">R$ ${venda}</div>
-      </article>
-      <article class="kpi">
-        <div class="label">Última atualização</div>
-        <div class="value">${horario}</div>
-      </article>
+      <article class="kpi"><div class="label">Data solicitada</div><div class="value">${data.requestedDate}</div></article>
+      <article class="kpi"><div class="label">Data utilizada</div><div class="value">${data.usedDate}</div></article>
+      <article class="kpi"><div class="label">Cotação compra</div><div class="value">R$ ${compra}</div></article>
+      <article class="kpi"><div class="label">Cotação venda</div><div class="value">R$ ${venda}</div></article>
+      <article class="kpi"><div class="label">Última atualização</div><div class="value">${horario}</div></article>
     </div>
   `;
 }
@@ -53,13 +112,8 @@ function renderFallback(data) {
 function renderResult(data) {
   resultBox.classList.remove('hidden');
   resultBox.classList.toggle('error', !data.ok);
-
-  if (data.ok) {
-    renderSuccess(data);
-    return;
-  }
-
-  renderFallback(data);
+  if (data.ok) renderSuccess(data);
+  else renderFallback(data);
 }
 
 form.addEventListener('submit', async (event) => {
@@ -68,14 +122,13 @@ form.addEventListener('submit', async (event) => {
   submitBtn.textContent = 'Consultando...';
   resultBox.classList.remove('hidden');
   resultBox.classList.remove('error');
-  resultBox.innerHTML = '<p>Buscando dados no endpoint local...</p>';
+  resultBox.innerHTML = '<p>Buscando dados na API PTAX do BCB...</p>';
 
   try {
-    const response = await fetch(`/api/ptax?date=${dateInput.value}`);
-    const data = await response.json();
+    const data = await fetchPtaxFromBcb(dateInput.value);
     renderResult(data);
   } catch (error) {
-    renderFallback({ ok: false, message: `Erro no frontend: ${error.message}` });
+    renderFallback({ ok: false, message: `Falha de rede/CORS: ${error.message}` });
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Buscar PTAX';
