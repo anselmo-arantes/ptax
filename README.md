@@ -43,3 +43,4 @@ Acesse: `http://localhost:4173`.
 
 A aplicação depende de disponibilidade/CORS da API PTAX do BCB no navegador.
 Se houver bloqueio de rede/cors no ambiente do usuário, a tela exibirá fallback de erro.
+
