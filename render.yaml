@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: ptax
+    env: static
+    staticPublishPath: public
